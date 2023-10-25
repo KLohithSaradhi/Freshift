@@ -9,6 +9,12 @@ import numpy as np
 import torch as th
 
 
+def freq_loss(sr, hr):
+    sr = np.fft.fftshift(np.fft.fft2(sr))
+    hr = np.fft.fftshift(np.fft.fft2(hr))
+
+    return np.sum(np.abs(sr - hr) ** 2)
+
 def normal_kl(mean1, logvar1, mean2, logvar2):
     """
     Compute the KL divergence between two gaussians.
@@ -37,6 +43,12 @@ def normal_kl(mean1, logvar1, mean2, logvar2):
         + th.exp(logvar1 - logvar2)
         + ((mean1 - mean2) ** 2) * th.exp(-logvar2)
     )
+
+def combined_loss(sr, hr, mean1, logvar1, mean2, logvar2, gamma=0.5):
+    kl = normal_kl(mean1, logvar1, mean2, logvar2)
+    freq = freq_loss(sr, hr)
+
+    return gamma * kl + (1 - gamma) * freq
 
 
 def approx_standard_normal_cdf(x):
